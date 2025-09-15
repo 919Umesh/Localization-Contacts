@@ -27,6 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     await Future.delayed(const Duration(seconds: 1));
     try {
+      //Login
+      //Username: emilys
+      //Password: emilyspass
       final response = await http.post(
         Uri.parse('https://dummyjson.com/auth/login'),
         headers: <String, String>{'Content-Type': 'application/json'},
@@ -54,9 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       debugPrint("Error during login: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
       }
     } finally {
       if (mounted) {
@@ -96,7 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08, vertical: screenHeight * 0.05),
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.08,
+                vertical: screenHeight * 0.05,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -138,7 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
                     Text(
                       l10n.loginToContinue!,
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.04),
 
@@ -167,17 +176,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF50C9C3), width: 2),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF50C9C3),
+                            width: 2,
+                          ),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.redAccent,
+                            width: 2,
+                          ),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.redAccent,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
                       ),
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -224,17 +245,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF50C9C3), width: 2),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF50C9C3),
+                            width: 2,
+                          ),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.redAccent,
+                            width: 2,
+                          ),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.redAccent,
+                            width: 2,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
                       ),
                     ),
 
@@ -246,12 +279,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           debugPrint("Forgot password tapped");
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.forgotPasswordNotImplemented!)),
+                            SnackBar(
+                              content: Text(l10n.forgotPasswordNotImplemented!),
+                            ),
                           );
                         },
                         child: Text(
                           l10n.forgotPassword!,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -272,22 +310,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        onPressed: _isLoading ? null : () {
-                          if (_formKey.currentState!.validate()) {
-                            _login();
-                          }
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                if (_formKey.currentState!.validate()) {
+                                  _login();
+                                }
+                              },
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A90E2)),
-                        )
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF4A90E2),
+                                ),
+                              )
                             : Text(
-                          l10n.login!,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                                l10n.login!,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
 
@@ -324,28 +366,39 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: screenHeight * 0.03),
                     Text(
                       l10n.continueWith!,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _socialButton(
-                          iconPath: "https://img.icons8.com/color/48/google-logo.png",
+                          iconPath:
+                              "https://img.icons8.com/color/48/google-logo.png",
                           onTap: () {
                             debugPrint("Google Login tapped");
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.googleLoginNotImplemented!)),
+                              SnackBar(
+                                content: Text(l10n.googleLoginNotImplemented!),
+                              ),
                             );
                           },
                         ),
                         SizedBox(width: screenWidth * 0.05),
                         _socialButton(
-                          iconPath: "https://img.icons8.com/fluency/48/facebook-new.png",
+                          iconPath:
+                              "https://img.icons8.com/fluency/48/facebook-new.png",
                           onTap: () {
                             debugPrint("Facebook Login tapped");
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.facebookLoginNotImplemented!)),
+                              SnackBar(
+                                content: Text(
+                                  l10n.facebookLoginNotImplemented!,
+                                ),
+                              ),
                             );
                           },
                         ),
@@ -360,13 +413,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           l10n.dontHaveAccount!,
-                          style: const TextStyle(color: Colors.white70, fontSize: 15),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 15,
+                          ),
                         ),
                         GestureDetector(
                           onTap: () {
                             debugPrint("Sign Up tapped");
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.signUpNotImplemented!)),
+                              SnackBar(
+                                content: Text(l10n.signUpNotImplemented!),
+                              ),
                             );
                           },
                           child: Text(
@@ -404,15 +462,15 @@ class _LoginScreenState extends State<LoginScreen> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white.withOpacity(0.5)),
         ),
-        child: Text(
-          flag,
-          style: const TextStyle(fontSize: 20),
-        ),
+        child: Text(flag, style: const TextStyle(fontSize: 20)),
       ),
     );
   }
 
-  Widget _socialButton({required String iconPath, required VoidCallback onTap}) {
+  Widget _socialButton({
+    required String iconPath,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -430,11 +488,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-        child: Image.network(
-          iconPath,
-          height: 30,
-          width: 30,
-        ),
+        child: Image.network(iconPath, height: 30, width: 30),
       ),
     );
   }

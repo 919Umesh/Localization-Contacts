@@ -1,4 +1,4 @@
-# myapp - Flutter eSewa Payment Integration
+# myapp - Flutter App with Localization, Auth & Contacts
 
 ## 📱 App Preview
 
@@ -15,13 +15,13 @@
 
 ## 🚀 Features
 
-- **eSewa Payment Integration**: Complete implementation of Nepal's popular payment gateway
-- **Modern UI**: Clean and intuitive user interface
+- **Multi-language Support**: English and Nepali localization with easy switching
+- **Authentication System**: Complete login/register flow with secure token management
+- **API Integration**: RESTful API calls with error handling and loading states
+- **Contact Access**: Read and display device contacts with permission handling
+- **Modern UI**: Clean and intuitive user interface with Google Fonts
 - **Infinite Scroll**: Efficient pagination for large data sets
 - **Network Image Caching**: Optimized image loading with caching
-- **Localization Support**: Multi-language support with intl package
-- **Contact Integration**: Access device contacts with permission handling
-- **Google Fonts**: Custom typography for enhanced visual appeal
 - **Toast Notifications**: User feedback with fluttertoast
 
 ## 📋 Prerequisites
@@ -29,7 +29,7 @@
 - Flutter SDK (version 3.8.1 or compatible)
 - Dart SDK
 - Android Studio or VS Code with Flutter extension
-- eSewa merchant account for payment processing
+- Backend API endpoint for authentication
 
 ## 🛠️ Installation
 
@@ -46,10 +46,9 @@
    flutter pub get
    ```
 
-3. **Configure eSewa credentials**
+3. **Configure API endpoints**
 
-   - Obtain your merchant ID and secret key from eSewa
-   - Update the configuration in `lib/config/esewa_config.dart`
+   - Update the API configuration in `lib/config/api_config.dart`
 
 4. **Run the application**
    ```bash
@@ -60,53 +59,257 @@
 
 The project uses the following key packages:
 
-- **http**: For API calls and eSewa integration
-- **infinite_scroll_pagination**: For efficient list pagination
-- **cached_network_image**: For optimized image loading
-- **flutter_localizations** & **intl**: For localization
-- **google_fonts**: For custom typography
+- **http**: For API calls and authentication
+- **shared_preferences**: For storing auth tokens and user preferences
+- **flutter_localizations** & **intl**: For localization support
+- **provider**: For state management
 - **permission_handler**: For runtime permissions
 - **flutter_contacts**: For contact access
+- **google_fonts**: For custom typography
 - **fluttertoast**: For user notifications
+- **cached_network_image**: For optimized image loading
+- **infinite_scroll_pagination**: For efficient list pagination
 
-## 🔧 Configuration
+## 🌐 Localization Setup
 
-### eSewa Setup
+### Adding Supported Languages
 
-1. Register as a merchant at [eSewa](https://esewa.com.np/)
-2. Obtain your merchant ID and secret key
-3. Update the configuration in the app:
+Update `pubspec.yaml` to include localization delegates:
 
-```dart
-// lib/config/esewa_config.dart
-class EsewaConfig {
-  static const String merchantId = 'YOUR_MERCHANT_ID';
-  static const String secretKey = 'YOUR_SECRET_KEY';
-  static const String baseUrl = 'https://rc-epay.esewa.com.np/api/epay/main/v2/';
-  static const String successUrl = 'https://yourdomain.com/success';
-  static const String failureUrl = 'https://yourdomain.com/failure';
+```yaml
+flutter:
+  generate: true
+  assets:
+    - assets/translations/
+```
+
+Create translation files in `assets/translations/`:
+
+- `en.json` (English)
+- `ne.json` (Nepali)
+
+### Example Translation Files
+
+**en.json:**
+
+```json
+{
+  "welcome": "Welcome",
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "switch_nepali": "Switch to Nepali",
+  "switch_english": "Switch to English"
 }
 ```
 
-### Android Configuration
+**ne.json:**
 
-Add internet permission to `android/app/src/main/AndroidManifest.xml`:
-
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```json
+{
+  "welcome": "स्वागतम्",
+  "login": "लगइन",
+  "email": "इमेल",
+  "password": "पासवर्ड",
+  "switch_nepali": "नेपालीमा स्विच गर्नुहोस्",
+  "switch_english": "अंग्रेजीमा स्विच गर्नुहोस्"
+}
 ```
 
-### iOS Configuration
+### Implementing Language Switching
 
-Add internet permission to `ios/Runner/Info.plist`:
+```dart
+// lib/providers/language_provider.dart
+class LanguageProvider with ChangeNotifier {
+  Locale _locale = const Locale('en');
 
-```xml
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-</dict>
+  Locale get locale => _locale;
+
+  void setLocale(Locale locale) {
+    _locale = locale;
+    notifyListeners();
+  }
+
+  void toggleLanguage() {
+    _locale = _locale.languageCode == 'en'
+        ? const Locale('ne')
+        : const Locale('en');
+    notifyListeners();
+  }
+}
+```
+
+## 🔐 Authentication System
+
+### API Configuration
+
+```dart
+// lib/config/api_config.dart
+class ApiConfig {
+  static const String baseUrl = 'https://your-api.com/api';
+  static const String loginEndpoint = '/auth/login';
+  static const String registerEndpoint = '/auth/register';
+  static const int connectTimeout = 5000;
+  static const int receiveTimeout = 3000;
+}
+```
+
+### Auth Service Implementation
+
+```dart
+// lib/services/auth_service.dart
+class AuthService {
+  final http.Client client;
+
+  AuthService(this.client);
+
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final response = await client.post(
+      Uri.parse('${ApiConfig.baseUrl}${ApiConfig.loginEndpoint}'),
+      body: json.encode({'email': email, 'password': password}),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to login');
+    }
+  }
+
+  Future<void> logout() async {
+    // Clear stored tokens
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_data');
+  }
+}
+```
+
+### Auth Provider for State Management
+
+```dart
+// lib/providers/auth_provider.dart
+class AuthProvider with ChangeNotifier {
+  String? _token;
+  User? _user;
+  bool _isLoading = false;
+
+  String? get token => _token;
+  User? get user => _user;
+  bool get isLoading => _isLoading;
+
+  Future<void> login(String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await AuthService(http.Client()).login(email, password);
+      _token = response['token'];
+      _user = User.fromJson(response['user']);
+
+      // Store token and user data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', _token!);
+      await prefs.setString('user_data', json.encode(_user!.toJson()));
+
+    } catch (error) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> autoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final userData = prefs.getString('user_data');
+
+    if (token != null && userData != null) {
+      _token = token;
+      _user = User.fromJson(json.decode(userData));
+      notifyListeners();
+    }
+  }
+}
+```
+
+## 📞 Contact Access Implementation
+
+### Permission Handling
+
+```dart
+// lib/utils/permission_handler.dart
+class AppPermissions {
+  static Future<bool> requestContactsPermission() async {
+    final status = await Permission.contacts.request();
+    return status.isGranted;
+  }
+
+  static Future<bool> hasContactsPermission() async {
+    final status = await Permission.contacts.status;
+    return status.isGranted;
+  }
+}
+```
+
+### Contact Service
+
+```dart
+// lib/services/contact_service.dart
+class ContactService {
+  static Future<List<Contact>> getContacts() async {
+    try {
+      final hasPermission = await AppPermissions.hasContactsPermission();
+      if (!hasPermission) {
+        final granted = await AppPermissions.requestContactsPermission();
+        if (!granted) {
+          throw Exception('Contacts permission denied');
+        }
+      }
+
+      final contacts = await FlutterContacts.getContacts(
+        withProperties: true,
+        withThumbnail: true,
+      );
+
+      return contacts;
+    } catch (e) {
+      throw Exception('Failed to fetch contacts: $e');
+    }
+  }
+}
+```
+
+### Contact Provider
+
+```dart
+// lib/providers/contact_provider.dart
+class ContactProvider with ChangeNotifier {
+  List<Contact> _contacts = [];
+  bool _isLoading = false;
+  String? _error;
+
+  List<Contact> get contacts => _contacts;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Future<void> loadContacts() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _contacts = await ContactService.getContacts();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
 ```
 
 ## 🏗️ Project Structure
@@ -115,64 +318,146 @@ Add internet permission to `ios/Runner/Info.plist`:
 lib/
 ├── main.dart
 ├── config/
-│   └── esewa_config.dart
+│   └── api_config.dart
 ├── models/
-│   └── payment_model.dart
+│   ├── user_model.dart
+│   └── contact_model.dart
 ├── services/
-│   └── esewa_service.dart
+│   ├── auth_service.dart
+│   ├── api_service.dart
+│   └── contact_service.dart
+├── providers/
+│   ├── auth_provider.dart
+│   ├── language_provider.dart
+│   └── contact_provider.dart
 ├── utils/
-│   └── constants.dart
+│   ├── constants.dart
+│   ├── permission_handler.dart
+│   └── localization.dart
 ├── widgets/
-│   └── payment_button.dart
+│   ├── language_switch.dart
+│   ├── auth_form.dart
+│   └── contact_list.dart
 └── screens/
+    ├── login_screen.dart
     ├── home_screen.dart
-    ├── payment_screen.dart
-    └── success_screen.dart
+    ├── contacts_screen.dart
+    └── profile_screen.dart
 ```
 
-## 💳 Payment Integration
+## 🔧 Configuration
 
-The app implements eSewa payment flow with the following steps:
+### Android Permissions
 
-1. **Initialize Payment**: Create payment request with amount and product details
-2. **Redirect to eSewa**: Open eSewa payment page
-3. **Payment Verification**: Verify transaction success/failure
-4. **Result Handling**: Process payment result and update UI
+Add required permissions to `android/app/src/main/AndroidManifest.xml`:
 
-Example payment initialization:
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.READ_CONTACTS" />
+```
+
+### iOS Permissions
+
+Add permissions to `ios/Runner/Info.plist`:
+
+```xml
+<key>NSContactsUsageDescription</key>
+<string>This app needs access to contacts to display them</string>
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
+```
+
+## 📊 API Call Example
 
 ```dart
-// Initialize eSewa payment
-final response = await EsewaService.initiatePayment(
-  amount: 1000,
-  productName: 'Test Product',
-  productId: '123',
-);
+// Example of API call with error handling
+Future<void> fetchUserData() async {
+  try {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/user/profile'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final userData = json.decode(response.body);
+      // Process data
+    } else if (response.statusCode == 401) {
+      // Handle unauthorized error
+      throw Exception('Session expired');
+    } else {
+      throw Exception('Failed to load data');
+    }
+  } on SocketException {
+    throw Exception('No internet connection');
+  } on FormatException {
+    throw Exception('Invalid data format');
+  } catch (e) {
+    throw Exception('An error occurred: $e');
+  }
+}
 ```
 
-## 🎨 UI Components
+## 🎨 UI Components Examples
 
-The app includes reusable UI components:
+### Language Switch Widget
 
-- **Custom AppBar**: With branding and navigation
-- **Product Grid**: Display items with infinite scroll
-- **Payment Form**: Input fields for payment details
-- **Loading Indicators**: For async operations
-- **Toast Notifications**: For user feedback
+```dart
+// lib/widgets/language_switch.dart
+class LanguageSwitch extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
 
-## 📊 Testing
-
-Run tests with:
-
-```bash
-flutter test
+    return Switch(
+      value: languageProvider.locale.languageCode == 'ne',
+      onChanged: (value) => languageProvider.toggleLanguage(),
+      inactiveThumbImage: AssetImage('assets/images/uk_flag.png'),
+      activeThumbImage: AssetImage('assets/images/np_flag.png'),
+    );
+  }
+}
 ```
 
-The project includes:
+### Contact List Widget
 
-- Unit tests for payment logic
-- Widget tests for UI components
-- Integration tests for payment flow
+```dart
+// lib/widgets/contact_list.dart
+class ContactList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final contactProvider = Provider.of<ContactProvider>(context);
+
+    if (contactProvider.isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (contactProvider.error != null) {
+      return Center(child: Text('Error: ${contactProvider.error}'));
+    }
+
+    return ListView.builder(
+      itemCount: contactProvider.contacts.length,
+      itemBuilder: (context, index) {
+        final contact = contactProvider.contacts[index];
+        return ListTile(
+          leading: contact.thumbnail != null
+              ? CircleAvatar(backgroundImage: MemoryImage(contact.thumbnail!))
+              : CircleAvatar(child: Text(contact.displayName[0])),
+          title: Text(contact.displayName),
+          subtitle: Text(contact.phones.isNotEmpty ? contact.phones.first.number : 'No phone'),
+        );
+      },
+    );
+  }
+}
+```
 
 ## 🚀 Building for Production
 
@@ -196,10 +481,11 @@ flutter build ios --release
 
 ## 🔒 Security Considerations
 
-- Never commit actual merchant credentials to version control
-- Use environment variables for sensitive data
-- Validate all payment responses server-side
-- Implement proper error handling for payment failures
+- Store sensitive data using `flutter_secure_storage`
+- Use HTTPS for all API calls
+- Validate and sanitize all user inputs
+- Implement proper error handling
+- Use environment variables for API keys and endpoints
 
 ## 🤝 Contributing
 
@@ -217,10 +503,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support regarding:
 
-- Flutter implementation: Check Flutter documentation
-- eSewa integration: Refer to eSewa developer documentation
+- Flutter implementation: Check [Flutter documentation](https://flutter.dev/docs)
+- Localization: Refer to [flutter_localizations package](https://pub.dev/packages/flutter_localizations)
+- Contact access: See [flutter_contacts package](https://pub.dev/packages/flutter_contacts)
 - App-specific issues: Open an issue in the repository
 
 ## 📞 Contact
 
 Umesh Shahi - [GitHub Profile](https://github.com/919Umesh)
+
+Project Link: [https://github.com/919Umesh/myapp](https://github.com/919Umesh/myapp)
